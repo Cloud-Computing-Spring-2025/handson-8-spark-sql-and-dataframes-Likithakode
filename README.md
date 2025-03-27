@@ -1,325 +1,149 @@
-# handson-08-sparkSQL-dataframes-social-media-sentiment-analysis
+# Social Media Sentiment Analysis with Spark
+
+## **Project Overview**
+This project leverages Apache Spark to analyze social media data and uncover insights related to user engagement, sentiment trends, and hashtag popularity. By utilizing Spark SQL and DataFrames, we extract key patterns from user interactions.
 
 ## **Prerequisites**
+Before running the analysis, ensure you have the following installed:
 
-Before starting the assignment, ensure you have the following software installed and properly configured on your machine:
-
-1. **Python 3.x**:
-   - [Download and Install Python](https://www.python.org/downloads/)
+1. **Python 3.x**
+   - [Download Python](https://www.python.org/downloads/)
    - Verify installation:
      ```bash
      python3 --version
      ```
-
-2. **PySpark**:
-   - Install using `pip`:
+2. **Apache Spark & PySpark**
+   - Install PySpark via `pip`:
      ```bash
      pip install pyspark
      ```
-
-3. **Apache Spark**:
-   - Ensure Spark is installed. You can download it from the [Apache Spark Downloads](https://spark.apache.org/downloads.html) page.
-   - Verify installation by running:
+   - Verify Spark installation:
      ```bash
      spark-submit --version
      ```
+3. **Docker (Optional)**
+   - If using Docker for Spark, install Docker and Docker Compose:
+     - [Docker Install Guide](https://docs.docker.com/get-docker/)
+     - [Docker Compose Install Guide](https://docs.docker.com/compose/install/)
 
-4. **Docker & Docker Compose** (Optional):
-   - If you prefer using Docker for setting up Spark, ensure Docker and Docker Compose are installed.
-   - [Docker Installation Guide](https://docs.docker.com/get-docker/)
-   - [Docker Compose Installation Guide](https://docs.docker.com/compose/install/)
-
-## **Setup Instructions**
-
-### **1. Project Structure**
-
-Ensure your project directory follows the structure below:
-
+## **Project Structure**
 ```
-SocialMediaSentimentAnalysis/
+SocialMediaAnalysis/
 ├── input/
+│   ├── users.csv
 │   ├── posts.csv
-│   └── users.csv
-├── outputs/
-│   ├── hashtag_trends.csv
+├── output/
+│   ├── top_hashtags.csv
 │   ├── engagement_by_age.csv
-│   ├── sentiment_engagement.csv
-│   └── top_verified_users.csv
-├── src/
-│   ├── task1_hashtag_trends.py
-│   ├── task2_engagement_by_age.py
-│   ├── task3_sentiment_vs_engagement.py
-│   └── task4_top_verified_users.py
+│   ├── sentiment_vs_engagement.csv
+│   ├── top_verified_users.csv
+├── scripts/
+│   ├── hashtag_analysis.py
+│   ├── engagement_by_age.py
+│   ├── sentiment_analysis.py
+│   ├── verified_users.py
 ├── docker-compose.yml
 └── README.md
 ```
 
-
-
-- **input/**: Contains the input datasets (`posts.csv` and `users.csv`)  
-- **outputs/**: Directory where the results of each task will be saved.
-- **src/**: Contains the individual Python scripts for each task.
-- **docker-compose.yml**: Docker Compose configuration file to set up Spark.
-- **README.md**: Assignment instructions and guidelines.
-
-### **2. Running the Analysis Tasks**
-
-You can run the analysis tasks either locally or using Docker.
-
-#### **a. Running Locally**
-
-1. **Navigate to the Project Directory**:
-   ```bash
-   cd SocialMediaSentimentAnalysis/
-   ```
-
-2. **Execute Each Task Using `spark-submit`**:
-   ```bash
- 
-     spark-submit src/task1_hashtag_trends.py
-     spark-submit src/task2_engagement_by_age.py
-     spark-submit src/task3_sentiment_vs_engagement.py
-     spark-submit src/task4_top_verified_users.py
-     
-   ```
-
-3. **Verify the Outputs**:
-   Check the `outputs/` directory for the resulting files:
-   ```bash
-   ls outputs/
-   ```
-
-#### **b. Running with Docker (Optional)**
-
-1. **Start the Spark Cluster**:
-   ```bash
-   docker-compose up -d
-   ```
-
-2. **Access the Spark Master Container**:
-   ```bash
-   docker exec -it spark-master bash
-   ```
-
-3. **Navigate to the Spark Directory**:
-   ```bash
-   cd /opt/bitnami/spark/
-   ```
-
-4. **Run Your PySpark Scripts Using `spark-submit`**:
-   ```bash
-   
-   spark-submit src/task1_hashtag_trends.py
-   spark-submit src/task2_engagement_by_age.py
-   spark-submit src/task3_sentiment_vs_engagement.py
-   spark-submit src/task4_top_verified_users.py
-   ```
-
-5. **Exit the Container**:
-   ```bash
-   exit
-   ```
-
-6. **Verify the Outputs**:
-   On your host machine, check the `outputs/` directory for the resulting files.
-
-7. **Stop the Spark Cluster**:
-   ```bash
-   docker-compose down
-   ```
-
-## **Overview**
-
-In this assignment, you will leverage Spark Structured APIs to analyze a dataset containing employee information from various departments within an organization. Your goal is to extract meaningful insights related to employee satisfaction, engagement, concerns, and job titles. This exercise is designed to enhance your data manipulation and analytical skills using Spark's powerful APIs.
-
-## **Objectives**
-
-By the end of this assignment, you should be able to:
-
-1. **Data Loading and Preparation**: Import and preprocess data using Spark Structured APIs.
-2. **Data Analysis**: Perform complex queries and transformations to address specific business questions.
-3. **Insight Generation**: Derive actionable insights from the analyzed data.
-
 ## **Dataset**
+### 1. `users.csv`
+Contains user details including demographics and verification status.
 
-## **Dataset: posts.csv **
+| UserID | Username    | AgeGroup | Country | Verified |
+|--------|------------|----------|---------|----------|
+| 1      | @john_doe  | Adult    | USA     | True     |
+| 2      | @jane_smith| Teen     | UK      | False    |
+| 3      | @tech_guru | Senior   | Canada  | True     |
 
-You will work with a dataset containing information about **100+ users** who rated movies across various streaming platforms. The dataset includes the following columns:
+### 2. `posts.csv`
+Includes user-generated posts along with engagement metrics and sentiment scores.
 
-| Column Name     | Type    | Description                                           |
-|-----------------|---------|-------------------------------------------------------|
-| PostID          | Integer | Unique ID for the post                                |
-| UserID          | Integer | ID of the user who posted                             |
-| Content         | String  | Text content of the post                              |
-| Timestamp       | String  | Date and time the post was made                       |
-| Likes           | Integer | Number of likes on the post                           |
-| Retweets        | Integer | Number of shares/retweets                             |
-| Hashtags        | String  | Comma-separated hashtags used in the post             |
-| SentimentScore  | Float   | Sentiment score (-1 to 1, where -1 is most negative)  |
-
-
----
-
-## **Dataset: users.csv **
-| Column Name | Type    | Description                          |
-|-------------|---------|--------------------------------------|
-| UserID      | Integer | Unique user ID                       |
-| Username    | String  | User's handle                        |
-| AgeGroup    | String  | Age category (Teen, Adult, Senior)   |
-| Country     | String  | Country of residence                 |
-| Verified    | Boolean | Whether the account is verified      |
+| PostID | UserID | Content                     | Timestamp           | Likes | Retweets | Hashtags       | SentimentScore |
+|--------|--------|----------------------------|---------------------|-------|----------|---------------|---------------|
+| 101    | 1      | Love the new tech update!  | 2023-10-01 14:00:00 | 120   | 50       | #tech,#AI     | 0.9           |
+| 102    | 2      | This app keeps crashing.  | 2023-10-02 15:30:00 | 30    | 10       | #bugs         | -0.5          |
+| 103    | 3      | Excited for the weekend!  | 2023-10-03 12:00:00 | 70    | 20       | #weekend      | 0.4           |
 
 ---
 
-### **Sample Data**
+## **Running the Analysis**
+You can execute the scripts locally or via Docker.
 
-Below is a snippet of the `posts.csv`,`users.csv` to illustrate the data structure. Ensure your dataset contains at least 100 records for meaningful analysis.
-
-```
-PostID,UserID,Content,Timestamp,Likes,Retweets,Hashtags,SentimentScore
-101,1,"Loving the new update! #tech #innovation","2023-10-05 14:20:00",120,45,"#tech,#innovation",0.8
-102,2,"This app keeps crashing. Frustrating! #fail","2023-10-05 15:00:00",5,1,"#fail",-0.7
-103,3,"Just another day... #mood","2023-10-05 16:30:00",15,3,"#mood",0.0
-104,4,"Absolutely love the UX! #design #cleanUI","2023-10-06 09:10:00",75,20,"#design,#cleanUI",0.6
-105,5,"Worst experience ever. Fix it. #bug","2023-10-06 10:45:00",2,0,"#bug",-0.9
+### **1. Running Locally**
+Navigate to the project directory and run each script using `spark-submit`:
+```bash
+cd SocialMediaAnalysis/
+spark-submit scripts/hashtag_analysis.py
+spark-submit scripts/engagement_by_age.py
+spark-submit scripts/sentiment_analysis.py
+spark-submit scripts/verified_users.py
 ```
 
----
-
-```
-UserID,Username,AgeGroup,Country,Verified
-1,@techie42,Adult,US,True
-2,@critic99,Senior,UK,False
-3,@daily_vibes,Teen,India,False
-4,@designer_dan,Adult,Canada,True
-5,@rage_user,Adult,US,False
-```
-
----
 
 
+## **Analysis Tasks**
+### **1. Hashtag Popularity**
+**Objective:** Identify the most frequently used hashtags.
 
-## **Assignment Tasks**
+- Extract hashtags from `posts.csv`.
+- Count occurrences and rank the top 10.
 
-You are required to complete the following three analysis tasks using Spark Structured APIs. Ensure that your analysis is well-documented, with clear explanations and any relevant visualizations or summaries.
-
-### **1. Hashtag Trends **
-
-**Objective:**
-
-Identify trending hashtags by analyzing their frequency of use across all posts.
-
-**Tasks:**
-
-- **Extract Hashtags**: Split the `Hashtags` column and flatten it into individual hashtag entries.
-- **Count Frequency**: Count how often each hashtag appears.
-- **Find Top Hashtags**: Identify the top 10 most frequently used hashtags.
-
-
-**Expected Outcome:**  
-A ranked list of the most-used hashtags and their frequencies.
-
-**Example Output:**
-
-| Hashtag     | Count |
-|-------------|-------|
-| #tech       | 120   |
-| #mood       | 98    |
-| #design     | 85    |
+**Expected Output:**
+| Hashtag   | Count |
+|-----------|-------|
+| #tech     | 150   |
+| #AI       | 120   |
+| #weekend  | 95    |
 
 ---
-
 ### **2. Engagement by Age Group**
+**Objective:** Analyze user engagement based on age group.
 
-**Objective:**  
-Understand how users from different age groups engage with content based on likes and retweets.
+- Join `users.csv` with `posts.csv` on `UserID`.
+- Compute average likes and retweets for each age group.
 
-**Tasks:**
-
-- **Join Datasets**: Combine `posts.csv` and `users.csv` using `UserID`.
-- **Group by AgeGroup**: Calculate average likes and retweets for each age group.
-- **Rank Groups**: Sort the results to highlight the most engaged age group.
-
-**Expected Outcome:**  
-A summary of user engagement behavior categorized by age group.
-
-**Example Output:**
-
+**Expected Output:**
 | Age Group | Avg Likes | Avg Retweets |
-|-----------|-----------|--------------|
-| Adult     | 67.3      | 25.2         |
-| Teen      | 22.0      | 5.6          |
-| Senior    | 9.2       | 1.3          |
+|-----------|----------|--------------|
+| Adult     | 80.2     | 30.5         |
+| Teen      | 45.1     | 15.8         |
+| Senior    | 25.7     | 8.2          |
 
 ---
+### **3. Sentiment & Engagement**
+**Objective:** Determine how sentiment influences engagement.
 
-### **3. Sentiment vs Engagement**
+- Categorize posts as Positive (`>0.3`), Neutral (`-0.3 to 0.3`), or Negative (`<-0.3`).
+- Compute average likes and retweets per sentiment category.
 
-**Objective:**  
-Evaluate how sentiment (positive, neutral, or negative) influences post engagement.
-
-**Tasks:**
-
-- **Categorize Posts**: Group posts into Positive (`>0.3`), Neutral (`-0.3 to 0.3`), and Negative (`< -0.3`) sentiment groups.
-- **Analyze Engagement**: Calculate average likes and retweets per sentiment category.
-
-**Expected Outcome:**  
-Insights into whether happier or angrier posts get more attention.
-
-**Example Output:**
-
+**Expected Output:**
 | Sentiment | Avg Likes | Avg Retweets |
-|-----------|-----------|--------------|
-| Positive  | 85.6      | 32.3         |
-| Neutral   | 27.1      | 10.4         |
-| Negative  | 13.6      | 4.7          |
+|-----------|----------|--------------|
+| Positive  | 90.5     | 40.3         |
+| Neutral   | 50.2     | 20.1         |
+| Negative  | 25.8     | 10.5         |
 
 ---
+### **4. Top Verified Users**
+**Objective:** Identify top influencers among verified users.
 
-### **4. Top Verified Users by Reach**
+- Filter users where `Verified = True`.
+- Compute total reach (likes + retweets) and rank the top 5 users.
 
-**Objective:**  
-Find the most influential verified users based on their post reach (likes + retweets).
-
-**Tasks:**
-
-- **Filter Verified Users**: Use `Verified = True` from `users.csv`.
-- **Calculate Reach**: Sum likes and retweets for each user.
-- **Rank Users**: Return top 5 verified users with highest total reach.
-
-**Expected Outcome:**  
-A leaderboard of verified users based on audience engagement.
-
-**Example Output:**
-
-| Username       | Total Reach |
-|----------------|-------------|
-| @techie42      | 1650        |
-| @designer_dan  | 1320        |
+**Expected Output:**
+| Username     | Total Reach |
+|-------------|------------|
+| @tech_guru  | 1700       |
+| @john_doe   | 1500       |
 
 ---
+## **Submission Checklist**
+- [✅] PySpark scripts (`scripts/` folder)
+- [✅] Output files (`output/` folder)
+- [✅] Input datasets (`input/` folder)
+- [✅] README.md
+- [✅] GitHub repository submission
 
-## **Grading Criteria**
 
-| Task                        | Marks |
-|-----------------------------|-------|
-| Hashtag Trend Analysis      | 1     |
-| Engagement by Age Group     | 1     |
-| Sentiment vs Engagement     | 1     |
-| Top Verified Users by Reach | 1     |
-| **Total**                   | **1** |
 
----
-
-## 📬 Submission Checklist
-
-- [ ] PySpark scripts in the `src/` directory  
-- [ ] Output files in the `outputs/` directory  
-- [ ] Datasets in the `input/` directory  
-- [ ] Completed `README.md`  
-- [ ] Commit everything to GitHub Classroom  
-- [ ] Submit your GitHub repo link on canvas
-
----
-
-Now go uncover the trends behind the tweets 📊🐤✨
